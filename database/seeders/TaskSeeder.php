@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB as FacadesDB;
+use Illuminate\Support\Facades\DB;
 
 class TaskSeeder extends Seeder
 {
@@ -12,9 +12,20 @@ class TaskSeeder extends Seeder
      */
     public function run(): void
     {
-        FacadesDB::table('tasks')->insert([
+        DB::table('tasks')->insert([
             'title' => 'Tarea 1',
-            'description' => 'Ejemplo 1'
+            'descripcion' => 'Descripción 1',
+            'user_id' => 1
+        ]);
+        DB::table('tasks')->insert([
+            'title' => 'Tarea 2',
+            'descripcion' => 'Descripción 2',
+            'user_id' => 1
+        ]);
+        DB::table('tasks')->insert([
+            'title' => 'Tarea 3',
+            'descripcion' => 'Descripción 3',
+            'user_id' => 1
         ]);
     }
 }
