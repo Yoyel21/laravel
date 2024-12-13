@@ -1,10 +1,10 @@
-<div class="container">
+<div wire:poll="getTask" class="container">
     <h1 class="mb-8">
         Scrollable Table Fixed Height
     </h1>
 
     <button
-        class="middle none center mr-4 rounded-lg bg-blue-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg hover:shadow-blue-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+        class="middle none center mr-4 rounded-lg bg-purple-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg hover:shadow-blue-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
         wire:click="openCreateModal" data-ripple-light="true">
         Nuevo
     </button>
@@ -30,16 +30,24 @@
                         </div>
                         <div>
                             <td>
-                                <button
-                                    class="middle none center mr-4 rounded-lg bg-blue-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg hover:shadow-blue-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-                                    data-ripple-light="true">
-                                    Editar
-                                </button>
-                                <button
-                                    class="middle none center mr-4 rounded-lg bg-red-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:shadow-red-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-                                    data-ripple-light="true">
-                                    Eliminar
-                                </button>
+                                @if ((isset($task->pivot) && $task->pivot->permission == 'edit') || auth()->user()->id == $task->user_id)
+                                    <button
+                                        class="middle none center mr-4 rounded-lg bg-blue-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg hover:shadow-blue-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                                        data-ripple-light="true" wire:click="openCreateModal({{ $task }})">
+                                        Editar
+                                    </button>
+                                    <button
+                                        class="middle none center mr-4 rounded-lg bg-yellow-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:shadow-red-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                                        data-ripple-light="true" wire:click="openShareModal({{ $task }})">
+                                        Compartir
+                                    </button>
+                                    <button
+                                        class="middle none center mr-4 rounded-lg bg-red-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:shadow-red-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                                        data-ripple-light="true" wire:click="deleteTask({{ $task }})"
+                                        wire:confirm="¿Deseas borrar la tarea?">
+                                        Eliminar
+                                    </button>
+                                @endif
                             </td>
                         </div>
                     @endforeach
@@ -53,7 +61,8 @@
                 <div class="w-full">
                     <div class="m-8 my-20 max-w-[400px] mx-auto">
                         <div class="mb-8">
-                            <h1 class="mb-4 text-3xl font-extrabold">Crear nueva tarea</h1>
+                            <h1 class="mb-4 text-3xl font-extrabold">
+                                {{ isset($this->editingTask->id) ? 'Actualizar' : 'Crear nueva' }} tarea</h1>
                             <form>
                                 <div class="space-y-4">
                                 </div>
@@ -73,13 +82,58 @@
                         </form>
                     </div>
                     <div class="space-y-4">
-                        <button class="p-3 bg-black rounded-full text-white w-full font-semibold" wire:click="createTask">Crear tarea</button>
-                        <button class="p-3 bg-white border rounded-full w-full font-semibold" wire:click="closeCreateModal">Cancelar</button>
+                        <button class="p-3 bg-black rounded-full text-white w-full font-semibold"
+                            wire:click="createTask">
+                            {{ isset($this->editingTask->id) ? 'Actualizar' : 'Crear' }} tarea</button>
+                        <button class="p-3 bg-white border rounded-full w-full font-semibold"
+                            wire:click="closeCreateModal">Cancelar</button>
                     </div>
                 </div>
             </div>
         </div>
 </div>
+@endif
+
+@if ($modalShare)
+    <div class="fixed left-0 top-0 flex h-full w-full items-center justify-center bg-black bg-opacity-50 py-10">
+        <div class="max-h-full w-full max-w-xl overflow-y-auto sm:rounded-2xl bg-white">
+            <div class="w-full">
+                <div class="m-8 my-20 max-w-[400px] mx-auto">
+                    <div class="mb-8">
+                        <h1 class="mb-4 text-3xl font-extrabold">
+                            {{ isset($this->editingTask->id) ? 'Actualizar' : 'Crear nueva' }} tarea</h1>
+                        <form>
+                            <div class="space-y-4">
+                            </div>
+                            <label for="title" class="block text-sm font-medium text-gray-700">Título</label>
+                            <select name="" id="">
+                                <option value="">Selecciona un usuario</option>
+                                @foreach ($users as $user)
+                                <option value="{{$user->id}}">{{$user->name}}</option>
+                                @endforeach
+                            </select>
+                    </div>
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">Titulo</label>
+
+                        <select name="" id="">
+                            <option value="">Selecciona un permiso</option>
+                            <option value="view">Ver</option>
+                            <option value="edit">Editar</option>
+                        </select>
+                    </div>
+                    </form>
+                </div>
+                <div class="space-y-4">
+                    <button class="p-3 bg-black rounded-full text-white w-full font-semibold" wire:click="shareTask">
+                    Compartir tarea</button>
+                    <button class="p-3 bg-white border rounded-full w-full font-semibold"
+                        wire:click="closeCreateModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
 @endif
 
 <div>
