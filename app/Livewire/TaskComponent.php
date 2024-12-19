@@ -111,6 +111,13 @@ class TaskComponent extends Component
     {
         $user = User::find($this->user_id);
         $user->sharedTasks()->attach($this->editingTask->id, ['permission' => $this->permission]);
+        $task = Task::find($this->editingTask->id);
+        $task->update(
+            [
+                'shared' => 1
+            ]
+            );
+            Mail::to($user->email)->queue(new SharedTask($task, auth()->user()));
         $this->clearFields();
         $this->closeCreateModal();
         $this->getTask();
